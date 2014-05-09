@@ -6,7 +6,7 @@
  * Based on the wrapper library from https://github.com/AlphawolfWMP/google-spell-pspell
  * and powered by the free Aspell and Pspell modules.
  *
- * Copyright (C) 2013, The Roundcube Dev Team
+ * Copyright (C) 2014, The Roundcube Dev Team
  *
  * @license GNU General Public License (GPL) 3.0 <http://www.gnu.org/copyleft/gpl.html>
  * @author: Thomas Bruederli <thomas@roundcube.net>
@@ -50,8 +50,10 @@ $options = array(
     'customDict'        => 0,
     'charset'           => 'utf-8',
 );
+$text = strval($request->text);
+if (!strlen($text)) $text = '*';  // avoid empty strings
 $factory = new SpellChecker($options);
-$spell = $factory->create(strval($request->text));
+$spell = $factory->create($text);
 
 if ($factory->errorLog()) {
     spellerror(500);
@@ -64,7 +66,8 @@ else {
 
 function spellerror($code, $message)
 {
-    header("HTTP/1.0 400 Bad Request");
+    $http_status = $code == 400 ? 'Bad Request' : 'Internal Server Error';
+    header("HTTP/1.0 $code $http_status");
     header('Content-Type: text/xml; charset=UTF-8');
     echo '<?xml version="1.0" encoding="utf-8" ?>' . "\n";
     echo '<spellresult error="'.$code.'"><errortext>' . htmlentities($message) . '</errortext></spellresult>';
