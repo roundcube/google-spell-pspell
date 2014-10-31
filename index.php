@@ -56,7 +56,8 @@ $factory = new SpellChecker($options);
 $spell = $factory->create($text);
 
 if ($factory->errorLog()) {
-    spellerror(500);
+    $err = reset($factory->errorLog());
+    spellerror(500, join("; ", (array)$err));
 }
 else {
     header('Content-Type: text/xml; charset=UTF-8');
