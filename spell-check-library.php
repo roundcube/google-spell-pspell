@@ -414,7 +414,7 @@ class GenericSpellChecker {
 		$notag_offsets = array();
 		$off = 0;
 		$offsets[] = 0;
-		mb_ereg_search_init($this->_html,"((?:<[^>]+>)+|(?:&.+;)+)");
+		mb_ereg_search_init($this->_html,"(<[^>]+>)");
 		while(($word = @mb_ereg_search_pos())){
 			$word[0] = mb_strlen(mb_strcut($this->_html,0,$word[0])); //hack for a wirdness in mb_ereg_search_pos returning bad offsets
 			$off += $word[1];
@@ -493,7 +493,6 @@ class PspellSpellChecker extends GenericSpellChecker {
 	//{{{ public function checkSpelling()
 	function checkSpelling() {
 		$text = strip_tags($this->_html);
-		$text = html_entity_decode($text);
 		$text = mb_ereg_replace("[~&\"#{(\[_\\^@)\]=+,.;/:!%*[:space:][:blank:]]"," ", $text);
 		$words = mb_split("\s", $text);
 		$off = 0;
