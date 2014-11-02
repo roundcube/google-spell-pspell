@@ -559,6 +559,107 @@ class PspellSpellChecker extends GenericSpellChecker {
 }
 //}}}
 
+
+//{{{ class EnchantSpellChecker
+/**
+* Spell checker class that uses the Pspell PHP library functions
+* @package AjaxSpellChecker
+* @subpackage WebService
+*/
+class EnchantSpellChecker extends GenericSpellChecker {
+
+	var $_dictionary;
+	var $_broker;
+
+	//{{{ public function __construct($text, &$options)
+	/**
+	* @see parent::__construct()
+	*/
+	function __construct($text, &$options) {
+		parent::__construct($text, $options);
+
+		$this->_broker = enchant_broker_init();
+
+		if (!enchant_broker_dict_exists($this->_broker, $this->_lang)) {
+			$this->_err["Can't use Enchant"] = array("Unable to load dictionary for selected language using Enchant");
+			return;
+		}
+
+		$this->_dictionary = enchant_broker_request_dict($this->_broker, $this->_lang);
+
+		if($text){
+			$this->checkSpelling();
+		} else {
+			$this->_buildSupportedLanguages();
+		}
+	}
+	//}}}
+
+	//{{{ public function checkSpelling()
+	function checkSpelling() {
+		$text = strip_tags($this->_html);
+		$text = mb_ereg_replace("[~&\"#{(\[_\\^@)\]=+,.;/:!%*[:space:][:blank:]]"," ", $text);
+		$words = preg_split('/\s/', $text, null, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_OFFSET_CAPTURE);
+		$off = 0;
+		foreach($words as $w) {
+			$word = trim($w[0]);
+			$o = $w[1] - $off;
+			$l = mb_strlen($word);
+			if(!enchant_dict_check($this->_dictionary, $word)) {
+				$sug = array_slice(enchant_dict_suggest($this->_dictionary, $word), 0, $this->_maxSuggestions);
+				$s = 0;
+				for($i = 0; $i < count($sug); $i++) {
+					if(levenshtein($word,$sug[$i]) == 1) {
+						$s = $i + 1;
+						break;
+					}
+				}
+				$this->_suggestions[] = array("o" => $o, "l" => $l, "s" => $s, "value" => $sug);
+			}
+			$off += (strlen($word) - $l);
+		}
+		$this->_updateOffsets();
+	}
+	//}}}
+
+	//{{{ public function storeReplacement($wrong, $right)
+	/**
+	* @param string $wrong
+	* @param string $right
+	*
+	* the replacement pair to be stored
+	*/
+	function storeReplacement($wrong, $right){
+		// enchant_dict_store_replacement($this->_dictionary, $wrong, $right);
+	}
+	//}}}
+
+	//{{{ public function addWord($word)
+	/**
+	* @param string $word the word to be added to custom word list
+	*/
+	function addWord($word){
+		// enchant_dict_add_to_personal($this->_dictionary, $word);
+	}
+	//}}}
+
+	//{{{ protected function _buildSupportedLanguages()
+	/**
+	*
+	* Build a list of languages supported by this backende need to do it the hard way.
+	*/
+	function _buildSupportedLanguages() {
+		foreach($this->_languageCodes as $lc=>$ln) {
+			if (enchant_broker_dict_exists($this->enchant_broker, $lc)) {
+				$this->_supportedLanguages[$lc] = $ln;
+			}
+		}
+	}
+	//}}}
+}
+//}}}
+
+
 //{{{ class SpellChecker
 /**
 * Factory class
@@ -614,7 +715,7 @@ class SpellChecker {
 	function __construct($params = array()) {
 		$this->_options = $params;
 		$this->_err = array();
-		$this->_backends = array("Pspell" => true, "Aspell" => false, "Google" => false);
+		$this->_backends = array("Enchant" => false, "Pspell" => false, "Aspell" => false, "Google" => false);
 
 		if(isset($params["personal"]) && !is_readable($params["personal"]) && is_writable(dirname($params["personal"]))) {
 			$fp = fopen($params["personal"],"w");
@@ -644,10 +745,15 @@ class SpellChecker {
 			return $factory->create($text, $backend);
 		}
 
+		//{{{ check for Enchant
+		if(extension_loaded("enchant")){
+			$this->_backends["Enchant"] = true;
+		}
+		//}}}
+
 		//{{{ check for pspell
-		if(!extension_loaded("pspell")){
-			$this->_err["Can't use Pspell"] = array("The pspell extension is not loaded");
-			$this->_backends["Pspell"] = false;
+		if(extension_loaded("pspell")){
+			$this->_backends["Pspell"] = true;
 		}
 		//}}}
 
@@ -662,6 +768,8 @@ class SpellChecker {
 				return new $class($text, $this->_options);
 			}
 		}
+
+		$this->_err["Can't find backend"] = array("No spelling extension (pspell or enchant) is loaded");
 
 		return false;
 	}
