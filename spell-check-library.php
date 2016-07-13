@@ -294,22 +294,22 @@ class GenericSpellChecker {
 	function checkSpelling() { trigger_error(__CLASS__ . "::" . __FUNCTION__ . " is an abstract method, implementation required"); }
 	//}}}
 
-	//{{{ public abstract function storeReplacement()
+	//{{{ public abstract function storeReplacement($wrong, $right)
 	/**
 	* Stores a replacement pair in the custom replacement list
 	* @abstract
 	* @access public
 	*/
-	function storeReplacement() { trigger_error(__CLASS__ . "::" . __FUNCTION__ . " is an abstract method, implementation required"); }
+	function storeReplacement($wrong, $right) { trigger_error(__CLASS__ . "::" . __FUNCTION__ . " is an abstract method, implementation required"); }
 	//}}}
 
-	//{{{ public abstract function addWord()
+	//{{{ public abstract function addWord($word)
 	/**
 	* Adds a word to the word list
 	* @abstract
 	* @access public
 	*/
-	function addWord() { trigger_error(__CLASS__ . "::" . __FUNCTION__ . " is an abstract method, implementation required"); }
+	function addWord($word) { trigger_error(__CLASS__ . "::" . __FUNCTION__ . " is an abstract method, implementation required"); }
 	//}}}
 
 	//{{{ protected abstract function _buildSupportedLanguages()
