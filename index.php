@@ -42,7 +42,7 @@ catch (Exception $e) {
     exit;
 }
 
-$lang = $_GET['lang'] ?: 'en';
+$lang = isset($_GET['lang']) ? $_GET['lang'] : 'en';
 
 $options = array(
     'lang'              => $lang,
