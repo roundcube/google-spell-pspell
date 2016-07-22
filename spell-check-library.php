@@ -399,8 +399,10 @@ class GenericSpellChecker {
 	* @access protected
 	*/
 	function _updateOffsets() {
-		for($i = 0; $i < count($this->_suggestions); $i++)
-			$this->_suggestions[$i]["o"] = $this->_offsets[$this->_suggestions[$i]["o"]];
+		for($i = 0; $i < count($this->_suggestions); $i++){
+			if (isset($this->_offsets[$this->_suggestions[$i]["o"]]))
+				$this->_suggestions[$i]["o"] = $this->_offsets[$this->_suggestions[$i]["o"]];
+		}
 	}
 	//}}}
 
@@ -433,7 +435,8 @@ class GenericSpellChecker {
 			} else {
 				$cnt++;
 				$oadd = 0;
-				$this->_offsets[$i] = $offsets[$cnt];
+				if (isset($offsets[$cnt]))
+					$this->_offsets[$i] = $offsets[$cnt];
 			}
 		}
 	}
@@ -606,7 +609,7 @@ class EnchantSpellChecker extends GenericSpellChecker {
 			$o = $w[1] - $off;
 			$l = mb_strlen($word);
 			if(!enchant_dict_check($this->_dictionary, $word)) {
-				$sug = array_slice(enchant_dict_suggest($this->_dictionary, $word), 0, $this->_maxSuggestions);
+				$sug = array_slice((array)enchant_dict_suggest($this->_dictionary, $word), 0, $this->_maxSuggestions);
 				$s = 0;
 				for($i = 0; $i < count($sug); $i++) {
 					if(levenshtein($word,$sug[$i]) == 1) {
